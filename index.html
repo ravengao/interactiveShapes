@@ -1,0 +1,519 @@
+Popular / About Ruimin Gao’s Block df9af11ccdea6679f0d88db291fe62be
+Updated December 28, 2016
+Interaction with basic shapes and symbols
+
+Open
+index.html#
+
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>LinguiSketch</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+<svg id="canvas" style="width:100%;height:100%;position:fixed;top:0;left:0;bottom:0;right:0;"></svg>
+
+<script type="text/javascript">
+var shapes=[];
+var svg = d3.select("#canvas");
+var rotateStart,rotateEnd,rotateSAngle,rotateEAngle, nAngle=0;
+var shapeCenter = [0,0];
+var triangleSymbol = d3.symbol().type(d3.symbolTriangle);
+var diamondSymbol = d3.symbol().type(d3.symbolDiamond);
+window.onload = function() {
+    var initShapes = svg.append("g")
+        .attr("class","initShapes");
+    initShapes.append("rect")
+        .attr("x", 40)
+        .attr("y", 30)
+        .attr("width", 80)
+        .attr("height", 80)
+        .style("fill", "grey")
+        .attr("class","InitShapes")
+        .attr("id","rect")
+        .on("click",createShape);
+    initShapes.append("circle")
+        .attr("cx", 80)
+        .attr("cy", 180)
+        .attr("r",40)
+        .style("fill", "grey")
+        .attr("class","InitShapes")
+        .attr("id","circle")
+        .on("click",createShape);
+    initShapes.append("path")
+        .attr("d", triangleSymbol
+        .size( function(d) { return 3000; }))
+        .attr("transform", "translate(80, 290)")    
+        .style("fill", "grey")
+        .attr("class","InitShapes")
+        .attr("id","inittriangle")
+        .on("click",createShape);
+    initShapes.append("path")
+        .attr("d", diamondSymbol
+        .size( function(d) { return 3000; }))
+        .attr("transform", "translate(80, 400)")    
+        .style("fill", "grey")
+        .attr("class","InitShapes")
+        .attr("id","initdiamond")
+        .on("click",createShape);
+    var color = d3.scaleOrdinal(d3.schemeCategory20c);
+    var colorplate = svg.selectAll(".colorplate")
+        .data(d3.range(12))
+        .enter()
+        .append("circle")
+        .attr("cx", "90%")
+        .attr("cy", function(d,i){return 50 + i*30;})
+        .attr("r",15)
+        .style("fill", function(d,i){return color(i);})
+        .attr("class","colorplate")
+        .attr("id","circle")
+        .on("click",changeColor);
+    initShapes.append("text")
+        .text("Current Color")
+        .attr("x", "85%")
+        .attr("y", "90%")
+        .style("fill", function(d,i){return color(i);}) 
+        .attr("class","InitShapes")
+        .attr("id","brush")
+        .on("click",changeColor);
+};
+    
+var drag = d3.drag()
+    .on("start",function(d,i){
+            d3.event.dx=0;
+            d3.event.dy=0;
+    })
+    .on("drag", function(d,i) {
+        if(this.id=="rect"){
+            core = this.parentNode.childNodes[1];
+            currentX = parseInt(d3.select(core).attr("x"));
+            currentY = parseInt(d3.select(core).attr("y"));
+
+            currentWidth = parseInt(d3.select(core).attr("width"));
+            currentHeight = parseInt(d3.select(core).attr("height"));
+
+        d3.select(this.parentNode)
+            .attr("transform", "rotate("+0+","+core.getAttribute("centerX")+","+core.getAttribute("centerY")+")");
+
+            d3.select(this).attr("x", d3.mouse(this)[0]-currentWidth/2);
+            d3.select(this).attr("y", d3.mouse(this)[1]-currentHeight/2);                
+
+            d3.select(core).attr("centerX",d3.mouse(this)[0]);
+            d3.select(core).attr("centerY",d3.mouse(this)[1]);
+
+            this.parentNode.childNodes[0].setAttribute('x',currentX-10);
+            this.parentNode.childNodes[0].setAttribute('y',currentY-10);
+            
+            this.parentNode.childNodes[2].setAttribute('cx',currentX+currentWidth);
+            this.parentNode.childNodes[2].setAttribute('cy',currentY+currentHeight);
+
+        d3.select(this.parentNode)
+            .attr("transform", "rotate("+d3.select(this.parentNode).attr("angle")+","+core.getAttribute("centerX")+","+core.getAttribute("centerY")+")");
+        }
+
+        if(this.id=="circle"){
+            currentX = parseInt(d3.select(this).attr("cx"));
+            currentY = parseInt(d3.select(this).attr("cy"));
+            currentRadius = Math.sqrt(parseInt(d3.select(this).attr("r")));
+
+            d3.select(this).attr("cx", currentX + d3.event.dx);
+            d3.select(this).attr("cy", currentY + d3.event.dy);
+            
+            this.parentNode.childNodes[0].setAttribute('cx',currentX);
+            this.parentNode.childNodes[0].setAttribute('cy',currentY);
+        }
+
+        if(this.id=="triangle" || this.id=="diamond"){
+            core=this.parentNode.childNodes[2];
+            d3.select(this.parentNode)
+                .attr("transform", "rotate("+0+","+event.pageX+","+event.pageY+")");
+
+            d3.select(this).attr("transform", "translate("+d3.event.x+","+d3.event.y+")")
+                            .attr("centerX",event.pageX) 
+                            .attr("centerY",event.pageY);
+            d3.select(this.parentNode.childNodes[0]).attr("transform", "translate("+d3.event.x+","+d3.event.y+")");
+            d3.select(this.parentNode.childNodes[1]).attr("transform", "translate("+d3.event.x+","+d3.event.y+")");
+
+            d3.select(this.parentNode)
+                .attr("transform", "rotate("+d3.select(this.parentNode).attr("angle")+","+event.pageX+","+(event.pageY)+")");
+
+        }
+    });
+
+var dragging = false;
+var dragResize = d3.drag()
+    .on("start",function(d,i){
+        dragging=true;
+        d3.select(this)
+            .transition()
+            .duration(100)
+            .attr("stroke","red")
+            .attr('stroke-width', 3);
+    })
+    .on("end",function(d,i){
+        dragging=false;
+        d3.select(this)
+            .transition()
+            .duration(100)
+            .attr("stroke","red")
+            .attr('stroke-width', 0);
+    })
+    .on("drag", function(d,i) {
+
+        type = this.getAttribute("class");
+        core = this.parentNode.childNodes[1];
+        currentX = parseInt(d3.select(core).attr("x"));
+        currentY = parseInt(d3.select(core).attr("y"));
+
+        //rect
+        if(type=="rect" & d3.event.x-currentX > 0 & d3.event.y-currentY > 0){
+            this.parentNode.childNodes[1].setAttribute('width',Math.abs(d3.event.x-currentX));
+            this.parentNode.childNodes[1].setAttribute('height',Math.abs(d3.event.y-currentY));
+
+            this.parentNode.childNodes[0].setAttribute('width',Math.abs(d3.event.x-currentX+20));
+            this.parentNode.childNodes[0].setAttribute('height',Math.abs(d3.event.y-currentY+20));
+
+            shapeCenter[0]=currentX + (d3.event.x-currentX)/2;
+            shapeCenter[1]=currentY + (d3.event.y-currentY)/2;
+
+
+            d3.select(this).attr("cx", d3.event.x);
+            d3.select(this).attr("cy", d3.event.y);
+
+        }
+
+        //circle
+        if(type=="circle"){
+            x=Math.pow(d3.event.x - parseInt(this.parentNode.childNodes[0].getAttribute("cx")),2);
+            y=Math.pow(d3.event.y - parseInt(this.parentNode.childNodes[0].getAttribute("cy")),2);
+            radius=Math.sqrt(x+y);
+
+            this.parentNode.childNodes[1].setAttribute('r',radius);
+            this.parentNode.childNodes[0].setAttribute('r',radius+8);
+        }
+
+                //triangle
+        if(type=="triangle"){
+            x=Math.pow(d3.event.x - parseInt(this.parentNode.childNodes[2].getAttribute("centerX")),2);
+            y=Math.pow(d3.event.y - parseInt(this.parentNode.childNodes[2].getAttribute("centerY")),2);
+            radius=Math.sqrt(x+y);
+
+            d3.select(this.parentNode.childNodes[0]).attr("d",triangleSymbol.size(Math.pow(radius+30,2)));
+            d3.select(this.parentNode.childNodes[1]).attr("d",triangleSymbol.size(Math.pow(radius+10,2)));
+            d3.select(this.parentNode.childNodes[2]).attr("d",triangleSymbol.size(Math.pow(radius,2)));
+
+        }
+
+        //diamond
+        if(type=="diamond"){
+            x=Math.pow(d3.event.x - parseInt(this.parentNode.childNodes[2].getAttribute("centerX")),2);
+            y=Math.pow(d3.event.y - parseInt(this.parentNode.childNodes[2].getAttribute("centerY")),2);
+            radius=Math.sqrt(x+y);
+            d3.select(this.parentNode.childNodes[0]).attr("d",diamondSymbol.size(Math.pow(radius+30,2)));
+            d3.select(this.parentNode.childNodes[1]).attr("d",diamondSymbol.size(Math.pow(radius+10,2)));
+            d3.select(this.parentNode.childNodes[2]).attr("d",diamondSymbol.size(Math.pow(radius,2)));
+
+        }
+    });
+
+var rotate = d3.drag()    
+    .on("drag", function(d,i) {
+        console.log("rotate",d3.event.x, d3.event.y)
+        if(this.parentNode.childNodes[1].id =="rect"){
+            shapeCenter[0]=this.parentNode.childNodes[1].getAttribute("centerX");
+            shapeCenter[1]=this.parentNode.childNodes[1].getAttribute("centerY");
+        }
+        core=this.parentNode.childNodes[2];
+        if(core.id=="triangle" || core.id=="diamond"){
+            shapeCenter[0]=core.getAttribute("centerX");
+            shapeCenter[1]=core.getAttribute("centerY");
+        }
+        nAngle += Math.atan2(d3.event.y - shapeCenter[1], d3.event.x - shapeCenter[0]) * (180 / Math.PI);
+        nAngle = nAngle % 360;
+        if (nAngle<0){
+            nAngle = 360+nAngle;
+        }
+        d3.select(this.parentNode)
+            .attr("angle",nAngle)
+            .attr("transform", "rotate("+nAngle+","+shapeCenter[0]+","+shapeCenter[1]+")");
+    });
+    
+function mouseover(){
+    d3.select(this).style("cursor","all-scroll");
+}
+function mouseout(){
+}
+var currentColor;
+function changeColor(){
+    
+    if(this.getAttribute("class")=="colorplate"){
+        currentColor = d3.select(this).style("fill");
+        d3.select("#brush").style("fill",function(d,i){return currentColor;});
+    }
+};
+function createShape(){
+    var newShape = svg.append("g");
+    newShape.attr("angle",0);
+    if(this.id=="rect"){
+        rx=100+500*Math.random();
+        ry=100+500*Math.random();
+        
+        newShape.append("rect")
+            .attr("x", rx-10)
+            .attr("y", ry-10)
+            .attr("width", 120)
+            .attr("height", 120)
+            .style("fill", "grey")
+            .attr("class","rect")
+            .attr('stroke-weight', 0)
+            .attr("id","rotator")
+            .style("fill-opacity",.1)
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","alias");
+            })
+            .call(rotate);
+
+        //core
+        newShape.append("rect")
+            .attr("x", rx)
+            .attr("y", ry)
+            .attr("width", 100)
+            .attr("height", 100)
+            .attr("centerX",rx+50) 
+            .attr("centerY",ry+50) 
+            .style("fill", "black")
+            .attr("class","rect")
+            .attr('stroke-weight', 0)
+            .attr("id","rect")
+            .on("mouseover",mouseover)
+            .on("mouseout",mouseout)
+            .on("click",function(d,i){
+                d3.select(this).style("fill",function(d,i){return currentColor;})
+            })
+            .on('dblclick', function(d,i) {
+                d3.select(this.parentNode).remove();
+            })
+            .call(drag);
+
+        shapeCenter = [rx+50,ry+50];
+
+        newShape.append("circle")
+            .attr("cx",rx+100)
+            .attr("cy",ry+100)
+            .attr("r",6)
+            .attr("id","rect")
+            .style("fill-opacity",.2)
+            .attr("class","rect")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","nwse-resize");
+                d3.select(this.parentNode.childNodes[1])
+                    .transition()
+                    .duration(100)
+                    .attr("stroke","red")
+                    .attr('stroke-width', 3);
+            })
+            .on("mouseout",function(d,i){
+                if(!dragging){
+                d3.select(this.parentNode.childNodes[1])
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 0);
+                }
+            })
+            .call(dragResize);
+    }
+
+    if(this.id=="circle"){
+        currentX=100+500*Math.random();
+        currentY=100+500*Math.random();
+
+        //circle behind
+        newShape.append("circle")
+            .attr("cx",currentX)
+            .attr("cy",currentY)
+            .attr("r",58)
+            .style("fill", "grey")
+            .style("fill-opacity",.1)
+            .attr("id","resizer")
+            .attr("class","circle")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","nwse-resize");
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr("stroke","red")
+                    .attr('stroke-width', 3);
+            })
+            .on("mouseout",function(d,i){
+                if(!dragging){
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 0);
+                }
+            })
+            .call(dragResize);
+
+        //core
+        newShape.append("circle")
+            .attr("cx", currentX)
+            .attr("cy", currentY)
+            .attr("r",50)
+            .style("fill", "black")
+            .attr("class","circle")
+            .attr("id","circle")
+            .on("mouseover",mouseover)
+            .on("mouseout",mouseout)
+            .on("click",function(d,i){
+                d3.select(this).style("fill",function(d,i){return currentColor;})
+            })
+            .on('dblclick', function(d,i) {
+                d3.select(this.parentNode).remove();
+            })
+            .call(drag);
+    }
+
+    if(this.id=="inittriangle"){
+        currentX=100+500*Math.random();
+        currentY=100+500*Math.random();
+
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolTriangle)
+            .size( function(d) { return 6000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "black")
+            .style("fill-opacity",.1)
+            .attr("class","grey")
+            .attr("id","triangle")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","alias");
+            })
+            .call(rotate);
+
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolTriangle)
+            .size( function(d) { return 4000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "grey")
+            .style("fill-opacity",.3)
+            .attr("class","triangle")
+            .attr("id","triangle")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","nwse-resize");
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr("stroke","red")
+                    .attr('stroke-width', 3);
+            })
+            .on("mouseout",function(d,i){
+                if(!dragging){
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 0);
+                }
+            })
+            .call(dragResize);
+
+        //core
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolTriangle)
+            .size( function(d) { return 3000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "black")
+            .attr("class","triangle")
+            .attr("id","triangle")
+            .on("mouseover",mouseover)
+            .on("mouseout",mouseout)
+            .on("click",function(d,i){
+                d3.select(this).style("fill",function(d,i){return currentColor;})
+            })
+            .on('dblclick', function(d,i) {
+                d3.select(this.parentNode).remove();
+            })
+            .call(drag);
+    }
+    if(this.id=="initdiamond"){
+        currentX=100+500*Math.random();
+        currentY=100+500*Math.random();
+
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolDiamond)
+            .size( function(d) { return 6000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "black")
+            .style("fill-opacity",.1)
+            .attr("class","diamond")
+            .attr("id","diamond")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","alias");
+            })
+            .call(rotate);
+
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolDiamond)
+            .size( function(d) { return 4000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "grey")
+            .style("fill-opacity",.3)
+            .attr("class","diamond")
+            .attr("id","diamond")
+            .on("mouseover",function(d,i){
+                d3.select(this).style("cursor","nwse-resize");
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr("stroke","red")
+                    .attr('stroke-width', 3);
+            })
+            .on("mouseout",function(d,i){
+                if(!dragging){
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 0);
+                }
+            })
+            .call(dragResize);
+
+        //core
+        newShape.append("path")
+            .attr("d", d3.symbol().type(d3.symbolDiamond)
+            .size( function(d) { return 3000; }))
+            .attr("centerX",currentX) 
+            .attr("centerY",currentY)              
+            .attr("transform", "translate("+currentX+", "+currentY+")")
+            .style("fill", "black")
+            .attr("class","diamond")
+            .attr("id","diamond")
+            .on("mouseover",mouseover)
+            .on("mouseout",mouseout)
+            .on("click",function(d,i){
+                d3.select(this).style("fill",function(d,i){return currentColor;})
+            })
+            .on('dblclick', function(d,i) {
+                d3.select(this.parentNode).remove();
+            })
+            .call(drag);
+    }
+};
+</script>
+</body>
+</html>
+LICENSE#
+
+This block appears to have no license. Please contact the author to request a license.
